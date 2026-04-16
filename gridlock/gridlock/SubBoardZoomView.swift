@@ -230,7 +230,7 @@ private struct PositionButton: View {
                             .frame(width: s * 0.72, height: s * 0.72)
                     } else if isPending {
                         Circle()
-                            .fill(AppTheme.secondary.opacity(0.55))
+                            .fill(AppTheme.playerColor(vm.state.currentPlayer).opacity(0.6))
                             .frame(width: s * 0.60, height: s * 0.60)
                     } else {
                         Circle()
