@@ -47,6 +47,9 @@ struct CompactSubBoardView: View {
     private var isFreeMoveActive: Bool {
         vm.state.activeBoards.isEmpty && status == .active
     }
+    private var isPendingTarget: Bool {
+        vm.pendingMoveTargets.contains(boardIndex) && status == .active
+    }
 
     var body: some View {
         ZStack {
@@ -73,13 +76,22 @@ struct CompactSubBoardView: View {
                     .padding(4)
             }
 
-            // Active board ring
-            if isActive && status == .active {
+            // Pending routing target: where the opponent will be sent
+            if isPendingTarget {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(AppTheme.secondary.opacity(0.25))
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(AppTheme.secondary, lineWidth: 3)
+            }
+
+            // Active board ring (only when no pending move is set)
+            if isActive && status == .active && !isPendingTarget {
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(isFreeMoveActive ? AppTheme.activeBoardHighlight.opacity(0.5) : AppTheme.activeBoardHighlight,
                             lineWidth: isFreeMoveActive ? 2 : 3)
             }
         }
+        .animation(.easeInOut(duration: 0.2), value: isPendingTarget)
     }
 }
 

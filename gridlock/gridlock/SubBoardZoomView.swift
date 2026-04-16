@@ -131,18 +131,23 @@ private struct Extended5x5BoardView: View {
 
     private var board: SubBoard { vm.state.boards[boardIndex] }
 
-    // 5x5 grid mapping — matches SubBoard flat index layout:
-    // Row 0: I[0]=TL, E[top0]=0, E[top1]=1, E[top2]=2, I[1]=TR
-    // Row 1: E[left0]=9, C[0], C[1], C[2], E[right0]=3
-    // Row 2: E[left1]=10, C[3], C[4], C[5], E[right1]=4
-    // Row 3: E[left2]=11, C[6], C[7], C[8], E[right2]=5
-    // Row 4: I[3]=BL, E[bot0]=6, E[bot1]=7, E[bot2]=8, I[2]=BR
+    // Correct 5x5 grid mapping:
+    // Cells sit at classic TTO positions (even rows/cols).
+    // Edges sit ON the dividing lines between adjacent cells (mixed even/odd).
+    // Intersections sit where the two dividing lines cross (odd rows/cols).
+    //
+    //        col0      col1          col2      col3          col4
+    // row0:  C[0]      E[9]=left0    C[1]      E[3]=right0   C[2]
+    // row1:  E[0]=top0 I[0]=TL       E[1]=top1 I[1]=TR       E[2]=top2
+    // row2:  C[3]      E[10]=left1   C[4]      E[4]=right1   C[5]
+    // row3:  E[6]=bot0 I[3]=BL       E[7]=bot1 I[2]=BR       E[8]=bot2
+    // row4:  C[6]      E[11]=left2   C[7]      E[5]=right2   C[8]
     private let gridPositions: [[(PosType, Int)]] = [
-        [(.intersection,0), (.edge,0),  (.edge,1),  (.edge,2),  (.intersection,1)],
-        [(.edge,9),          (.cell,0),  (.cell,1),  (.cell,2),  (.edge,3)],
-        [(.edge,10),         (.cell,3),  (.cell,4),  (.cell,5),  (.edge,4)],
-        [(.edge,11),         (.cell,6),  (.cell,7),  (.cell,8),  (.edge,5)],
-        [(.intersection,3), (.edge,6),  (.edge,7),  (.edge,8),  (.intersection,2)],
+        [(.cell,0),          (.edge,9),           (.cell,1),  (.edge,3),           (.cell,2)],
+        [(.edge,0),          (.intersection,0),   (.edge,1),  (.intersection,1),   (.edge,2)],
+        [(.cell,3),          (.edge,10),          (.cell,4),  (.edge,4),           (.cell,5)],
+        [(.edge,6),          (.intersection,3),   (.edge,7),  (.intersection,2),   (.edge,8)],
+        [(.cell,6),          (.edge,11),          (.cell,7),  (.edge,5),           (.cell,8)],
     ]
 
     var body: some View {
@@ -170,12 +175,12 @@ private struct Extended5x5BoardView: View {
                     }
                 }
 
-                // Tic-tac-toe lines: between border row/col and inner cells
-                // Lines at 1/5 and 4/5 of total size
+                // Lines run through the centers of rows/cols 1 and 3 in the 5x5 grid.
+                // With cell size = sz/5, those centers are at 1.5*(sz/5) = 3sz/10 and 3.5*(sz/5) = 7sz/10.
                 Canvas { ctx, sz in
                     let lw: CGFloat = 3
                     let color = Color(white: 0.55)
-                    for t in [1.0 / 5.0, 4.0 / 5.0] {
+                    for t in [3.0 / 10.0, 7.0 / 10.0] {
                         var h = Path()
                         h.move(to: CGPoint(x: 0, y: sz.height * t))
                         h.addLine(to: CGPoint(x: sz.width, y: sz.height * t))

@@ -198,4 +198,13 @@ final class GameViewModel {
 
     var currentPlayerName: String { playerDisplayName(state.currentPlayer) }
     var currentPlayerColor: Color { AppTheme.playerColor(state.currentPlayer) }
+
+    /// Boards the opponent will be routed to if the pending move is confirmed.
+    var pendingMoveTargets: Set<Int> {
+        guard let move = pendingMove else { return [] }
+        let next = GameEngine.apply(move, to: state)
+        return next.activeBoards.isEmpty
+            ? Set((0..<9).filter { next.metaStatus[$0] == .active })
+            : next.activeBoards
+    }
 }
