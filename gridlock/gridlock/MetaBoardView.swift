@@ -9,9 +9,12 @@ struct MetaBoardView: View {
     var body: some View {
         LazyVGrid(columns: columns, spacing: 4) {
             ForEach(0..<9, id: \.self) { idx in
-                CompactSubBoardView(boardIndex: idx, vm: vm)
+                Color.clear
                     .aspectRatio(1, contentMode: .fit)
-                    .onTapGesture { vm.tapSubBoard(idx) }
+                    .overlay(
+                        CompactSubBoardView(boardIndex: idx, vm: vm)
+                            .onTapGesture { vm.tapSubBoard(idx) }
+                    )
             }
         }
     }
