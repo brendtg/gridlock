@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct GameBoardView: View {
     @State private var vm: GameViewModel
     let router: AppRouter

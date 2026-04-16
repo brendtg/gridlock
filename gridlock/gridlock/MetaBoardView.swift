@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct MetaBoardView: View {
     let vm: GameViewModel
 
@@ -31,6 +32,7 @@ struct MetaBoardView: View {
     }
 }
 
+@MainActor
 struct CompactSubBoardView: View {
     let boardIndex: Int
     let vm: GameViewModel

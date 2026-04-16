@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct SubBoardZoomView: View {
     let boardIndex: Int
     let vm: GameViewModel
@@ -53,6 +54,7 @@ struct SubBoardZoomView: View {
     }
 }
 
+@MainActor
 private struct ZoomedBoardGrid: View {
     let boardIndex: Int
     let vm: GameViewModel
@@ -71,6 +73,7 @@ private struct ZoomedBoardGrid: View {
 
 // MARK: - Classic 3x3
 
+@MainActor
 private struct Classic3x3BoardView: View {
     let boardIndex: Int
     let vm: GameViewModel
@@ -107,6 +110,7 @@ private struct Classic3x3BoardView: View {
 
 // MARK: - Extended 5x5
 
+@MainActor
 private struct Extended5x5BoardView: View {
     let boardIndex: Int
     let vm: GameViewModel
@@ -208,6 +212,7 @@ private struct Extended5x5BoardView: View {
 
 // MARK: - Position Button
 
+@MainActor
 private struct PositionButton: View {
     let posType: PosType
     let posIndex: Int
@@ -269,6 +274,7 @@ private struct PositionButton: View {
 
 // MARK: - Confirm Bar
 
+@MainActor
 struct ConfirmBar: View {
     let vm: GameViewModel
 
