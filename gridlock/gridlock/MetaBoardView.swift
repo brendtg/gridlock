@@ -34,6 +34,7 @@ struct CompactSubBoardView: View {
 
     private var board: SubBoard { vm.state.boards[boardIndex] }
     private var status: BoardStatus { vm.state.metaStatus[boardIndex] }
+    private var isExtended: Bool { vm.state.variant.isExtended }
     private var isActive: Bool {
         if vm.state.isGameOver { return false }
         let legalBoards = vm.state.activeBoardsForCurrentPlayer
@@ -69,7 +70,7 @@ struct CompactSubBoardView: View {
                     .font(.sfRounded(20, weight: .bold))
                     .foregroundColor(AppTheme.textSecondary)
             } else {
-                MiniBoardGrid(board: board)
+                MiniBoardGrid(board: board, isExtended: isExtended)
                     .padding(3)
             }
 
@@ -109,13 +110,57 @@ struct CompactSubBoardView: View {
 
 private struct MiniBoardGrid: View {
     let board: SubBoard
+    let isExtended: Bool
 
     var body: some View {
         GeometryReader { geo in
             let size = min(geo.size.width, geo.size.height)
-            ClassicMiniBoardGrid(board: board, size: size)
+            if isExtended {
+                ExtendedMiniBoardGrid(board: board, size: size)
+            } else {
+                ClassicMiniBoardGrid(board: board, size: size)
+            }
         }
         .aspectRatio(1, contentMode: .fit)
+    }
+}
+
+private struct ExtendedMiniBoardGrid: View {
+    let board: SubBoard
+    let size: CGFloat
+
+    private let grid: [[(PosType, Int)]] = [
+        [(.cell,0),  (.edge,9),  (.cell,1),  (.edge,3),  (.cell,2)],
+        [(.edge,0),  (.intersection,0), (.edge,1),  (.intersection,1), (.edge,2)],
+        [(.cell,3),  (.edge,10), (.cell,4),  (.edge,4),  (.cell,5)],
+        [(.edge,6),  (.intersection,3), (.edge,7),  (.intersection,2), (.edge,8)],
+        [(.cell,6),  (.edge,11), (.cell,7),  (.edge,5),  (.cell,8)],
+    ]
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            VStack(spacing: 0) {
+                ForEach(0..<5, id: \.self) { row in
+                    HStack(spacing: 0) {
+                        ForEach(0..<5, id: \.self) { col in
+                            let (pt, pi) = grid[row][col]
+                            MiniPiece(
+                                player: board.occupant(posType: pt, posIndex: pi),
+                                cellSize: size / 5
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Lines at equal thirds so all visual sections are the same size
+            Canvas { ctx, sz in
+                drawTTOLines(ctx: ctx, sz: sz, at: [1.0/3.0, 2.0/3.0], lineWidth: 1.5)
+            }
+            .allowsHitTesting(false)
+            .frame(width: size, height: size)
+        }
+        .frame(width: size, height: size)
     }
 }
 
