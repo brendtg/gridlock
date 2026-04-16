@@ -121,63 +121,47 @@ enum GameEngine {
         return open.count == 9 ? [] : open  // empty = free move
     }
 
-    // MARK: - Edge routing tables
-    // Board layout (3x3 meta-grid, 0-indexed row-major):
-    //   0 1 2
-    //   3 4 5
-    //   6 7 8
+    // MARK: - Edge / Intersection routing tables
     //
-    // Edge index within a sub-board:
-    //   0,1,2 = top edge (left-to-right)
-    //   3,4,5 = right edge (top-to-bottom)
-    //   6,7,8 = bottom edge (left-to-right)
-    //   9,10,11 = left edge (top-to-bottom)
+    // Routing is determined by which cells a position is adjacent to.
+    // Cell indices 0-8 are the meta-board indices, so adjacency directly
+    // gives the target meta-boards regardless of which sub-board was played.
     //
-    // An edge at position e of board b routes to: b AND the adjacent board across that edge
+    // 5x5 grid (cells at even rows/cols, edges/intersections on the lines):
+    //        col0   col1     col2   col3     col4
+    // row0:  C[0]   E[9]     C[1]   E[3]     C[2]
+    // row1:  E[0]   I[0]=TL  E[1]   I[1]=TR  E[2]
+    // row2:  C[3]   E[10]    C[4]   E[4]     C[5]
+    // row3:  E[6]   I[3]=BL  E[7]   I[2]=BR  E[8]
+    // row4:  C[6]   E[11]    C[7]   E[5]     C[8]
 
     static func edgeRoutingBoards(boardIndex b: Int, edgeIndex e: Int) -> Set<Int> {
-        let row = b / 3, col = b % 3
         switch e {
-        case 0,1,2: // top edge → adjacent board above
-            let above = row > 0 ? (row-1)*3 + col : b
-            return above == b ? [b] : [b, above]
-        case 3,4,5: // right edge → adjacent board to right
-            let right = col < 2 ? row*3 + (col+1) : b
-            return right == b ? [b] : [b, right]
-        case 6,7,8: // bottom edge → adjacent board below
-            let below = row < 2 ? (row+1)*3 + col : b
-            return below == b ? [b] : [b, below]
-        case 9,10,11: // left edge → adjacent board to left
-            let left = col > 0 ? row*3 + (col-1) : b
-            return left == b ? [b] : [b, left]
+        case 0:  return [0, 3]   // top div line, left col:   between C[0] and C[3]
+        case 1:  return [1, 4]   // top div line, center col: between C[1] and C[4]
+        case 2:  return [2, 5]   // top div line, right col:  between C[2] and C[5]
+        case 3:  return [1, 2]   // right div line, top row:  between C[1] and C[2]
+        case 4:  return [4, 5]   // right div line, mid row:  between C[4] and C[5]
+        case 5:  return [7, 8]   // right div line, bot row:  between C[7] and C[8]
+        case 6:  return [3, 6]   // bot div line, left col:   between C[3] and C[6]
+        case 7:  return [4, 7]   // bot div line, center col: between C[4] and C[7]
+        case 8:  return [5, 8]   // bot div line, right col:  between C[5] and C[8]
+        case 9:  return [0, 1]   // left div line, top row:   between C[0] and C[1]
+        case 10: return [3, 4]   // left div line, mid row:   between C[3] and C[4]
+        case 11: return [6, 7]   // left div line, bot row:   between C[6] and C[7]
         default: return [b]
         }
     }
 
     static func intersectionRoutingBoards(boardIndex b: Int, intersectionIndex i: Int) -> Set<Int> {
-        // Intersection index: 0=TL, 1=TR, 2=BR, 3=BL
-        let row = b / 3, col = b % 3
-        var result: Set<Int> = [b]
+        // Each intersection touches the 4 surrounding cells.
         switch i {
-        case 0: // TL corner: b, board above, board to left, board above-left
-            if row > 0 { result.insert((row-1)*3 + col) }
-            if col > 0 { result.insert(row*3 + (col-1)) }
-            if row > 0 && col > 0 { result.insert((row-1)*3 + (col-1)) }
-        case 1: // TR corner
-            if row > 0 { result.insert((row-1)*3 + col) }
-            if col < 2 { result.insert(row*3 + (col+1)) }
-            if row > 0 && col < 2 { result.insert((row-1)*3 + (col+1)) }
-        case 2: // BR corner
-            if row < 2 { result.insert((row+1)*3 + col) }
-            if col < 2 { result.insert(row*3 + (col+1)) }
-            if row < 2 && col < 2 { result.insert((row+1)*3 + (col+1)) }
-        case 3: // BL corner
-            if row < 2 { result.insert((row+1)*3 + col) }
-            if col > 0 { result.insert(row*3 + (col-1)) }
-            if row < 2 && col > 0 { result.insert((row+1)*3 + (col-1)) }
-        default: break
+        case 0: return [0, 1, 3, 4]  // TL: touches C[0], C[1], C[3], C[4]
+        case 1: return [1, 2, 4, 5]  // TR: touches C[1], C[2], C[4], C[5]
+        case 2: return [4, 5, 7, 8]  // BR: touches C[4], C[5], C[7], C[8]
+        case 3: return [3, 4, 6, 7]  // BL: touches C[3], C[4], C[6], C[7]
+        default: return [b]
         }
-        return result
     }
 
     // MARK: - Bounce routing
