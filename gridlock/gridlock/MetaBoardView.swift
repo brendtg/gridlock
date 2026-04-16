@@ -90,13 +90,13 @@ struct CompactSubBoardView: View {
                     .stroke(opponentColor, lineWidth: 3)
             }
 
-            // Active board ring (only on main board, not in zoom context)
+            // Active board ring: current player's color shows where they can play
             if isActive && status == .active && !isPendingTarget && !isZoomed {
                 RoundedRectangle(cornerRadius: 6)
                     .stroke(
                         isFreeMoveActive
-                            ? AppTheme.activeBoardHighlight.opacity(0.5)
-                            : AppTheme.activeBoardHighlight,
+                            ? currentPlayerColor.opacity(0.5)
+                            : currentPlayerColor,
                         lineWidth: isFreeMoveActive ? 2 : 3
                     )
             }
