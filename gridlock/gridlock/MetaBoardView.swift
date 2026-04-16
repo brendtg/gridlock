@@ -46,6 +46,11 @@ struct CompactSubBoardView: View {
     private var isPendingTarget: Bool {
         vm.pendingMoveTargets.contains(boardIndex) && status == .active
     }
+    private var isZoomed: Bool {
+        vm.zoomedBoardIndex == boardIndex
+    }
+    private var currentPlayerColor: Color { AppTheme.playerColor(vm.state.currentPlayer) }
+    private var opponentColor: Color { AppTheme.playerColor(vm.state.currentPlayer.opponent) }
 
     var body: some View {
         ZStack {
@@ -69,16 +74,24 @@ struct CompactSubBoardView: View {
                     .padding(3)
             }
 
-            // Routing target highlight
-            if isPendingTarget {
+            // Zoomed board: light fill in current player's color
+            if isZoomed {
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(AppTheme.secondary.opacity(0.25))
+                    .fill(currentPlayerColor.opacity(0.18))
                 RoundedRectangle(cornerRadius: 6)
-                    .stroke(AppTheme.secondary, lineWidth: 3)
+                    .stroke(currentPlayerColor.opacity(0.8), lineWidth: 3)
             }
 
-            // Active board ring
-            if isActive && status == .active && !isPendingTarget {
+            // Routing target: outlined in opponent's color
+            if isPendingTarget {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(opponentColor.opacity(0.15))
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(opponentColor, lineWidth: 3)
+            }
+
+            // Active board ring (only on main board, not in zoom context)
+            if isActive && status == .active && !isPendingTarget && !isZoomed {
                 RoundedRectangle(cornerRadius: 6)
                     .stroke(
                         isFreeMoveActive
@@ -89,6 +102,7 @@ struct CompactSubBoardView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: isPendingTarget)
+        .animation(.easeInOut(duration: 0.2), value: isZoomed)
     }
 }
 

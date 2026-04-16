@@ -14,15 +14,9 @@ struct SubBoardZoomView: View {
                 .onTapGesture { vm.dismissZoom() }
 
             VStack(spacing: 16) {
-                // Header: title + mini meta-board + close
-                HStack(alignment: .center, spacing: 12) {
-                    Text("Board \(boardIndex + 1)")
-                        .font(.sfRounded(18, weight: .semibold))
-                        .foregroundColor(AppTheme.textPrimary)
+                // Close button
+                HStack {
                     Spacer()
-                    MetaBoardView(vm: vm)
-                        .frame(width: 88, height: 88)
-                        .allowsHitTesting(false)
                     Button(action: vm.dismissZoom) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.title2)
@@ -48,6 +42,11 @@ struct SubBoardZoomView: View {
                     ConfirmBar(vm: vm)
                         .padding(.horizontal, 24)
                 }
+
+                // Meta-board context
+                MetaBoardView(vm: vm)
+                    .frame(width: 160, height: 160)
+                    .allowsHitTesting(false)
 
                 Spacer(minLength: 16)
             }
@@ -242,7 +241,6 @@ private struct PositionButton: View {
             }
         }
         .buttonStyle(.plain)
-        .disabled(player != .empty)
     }
 }
 
