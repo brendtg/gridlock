@@ -52,7 +52,6 @@ final class VariantPickerViewModel {
         case .passAndPlay:
             let config = GameConfig.passAndPlay(
                 variant: selectedVariant,
-                pieRule: settings.pieRuleDefault,
                 p1Name: settings.player1Name,
                 p2Name: settings.player2Name
             )

@@ -53,14 +53,6 @@ struct GameBoardView: View {
                 .allowsHitTesting(false)
             }
 
-            // Pie rule offer
-            if vm.showPieRuleOffer {
-                PieRuleOfferView(
-                    onAccept: { vm.acceptPieRule() },
-                    onDecline: { vm.declinePieRule() }
-                )
-            }
-
             // Turn handoff (Pass & Play)
             if vm.showTurnHandoff {
                 TurnHandoffView(vm: vm)
@@ -158,52 +150,6 @@ private struct ScoreView: View {
             Text("\(p2Score)")
                 .font(.sfRounded(22, weight: .bold))
                 .foregroundColor(AppTheme.player2Color)
-        }
-    }
-}
-
-private struct PieRuleOfferView: View {
-    let onAccept: () -> Void
-    let onDecline: () -> Void
-
-    var body: some View {
-        ZStack {
-            Color.black.opacity(0.7).ignoresSafeArea()
-            VStack(spacing: 20) {
-                Text("Pie Rule")
-                    .font(.sfRounded(24, weight: .bold))
-                    .foregroundColor(.white)
-                Text("Player 2: you may swap sides and take over the opening move, or play on.")
-                    .font(.sfRounded(15))
-                    .foregroundColor(.white.opacity(0.8))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-                HStack(spacing: 16) {
-                    Button(action: onDecline) {
-                        Text("Play On")
-                            .font(.sfRounded(16, weight: .semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(AppTheme.surface)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                    }
-                    Button(action: onAccept) {
-                        Text("Swap Sides")
-                            .font(.sfRounded(16, weight: .semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(AppTheme.secondary)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                    }
-                }
-                .padding(.horizontal)
-            }
-            .padding(28)
-            .background(AppTheme.background)
-            .cornerRadius(20)
-            .padding(24)
         }
     }
 }

@@ -36,7 +36,6 @@ struct SettingsView: View {
                     settingsToggle("Confirm Button", icon: "checkmark.circle.fill", binding: $settings.showConfirmButton)
                     settingsToggle("Routing Animation", icon: "arrow.right.circle.fill", binding: $settings.showRoutingAnimation)
                     settingsToggle("Auto-Zoom Active Board", icon: "arrow.up.left.and.arrow.down.right", binding: $settings.autoZoom)
-                    settingsToggle("Pie Rule by Default", icon: "arrow.left.arrow.right", binding: $settings.pieRuleDefault)
                 }
             }
             .scrollContentBackground(.hidden)

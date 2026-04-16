@@ -22,18 +22,17 @@ struct GameConfig: Hashable, Codable {
     var playMode: GameConfigMode
     var playerSide: Player       // for vsComputer: which side is human
     var difficulty: Difficulty
-    var pieRuleEnabled: Bool
     var player1Name: String
     var player2Name: String
 
-    static func vsComputer(variant: GameVariant, difficulty: Difficulty, side: Player, pieRule: Bool, p1Name: String, p2Name: String) -> GameConfig {
-        GameConfig(variant: variant, playMode: .vsComputer, playerSide: side, difficulty: difficulty, pieRuleEnabled: pieRule, player1Name: p1Name, player2Name: p2Name)
+    static func vsComputer(variant: GameVariant, difficulty: Difficulty, side: Player, p1Name: String, p2Name: String) -> GameConfig {
+        GameConfig(variant: variant, playMode: .vsComputer, playerSide: side, difficulty: difficulty, player1Name: p1Name, player2Name: p2Name)
     }
-    static func passAndPlay(variant: GameVariant, pieRule: Bool, p1Name: String, p2Name: String) -> GameConfig {
-        GameConfig(variant: variant, playMode: .passAndPlay, playerSide: .p1, difficulty: .medium, pieRuleEnabled: pieRule, player1Name: p1Name, player2Name: p2Name)
+    static func passAndPlay(variant: GameVariant, p1Name: String, p2Name: String) -> GameConfig {
+        GameConfig(variant: variant, playMode: .passAndPlay, playerSide: .p1, difficulty: .medium, player1Name: p1Name, player2Name: p2Name)
     }
     static func online(variant: GameVariant) -> GameConfig {
-        GameConfig(variant: variant, playMode: .online, playerSide: .p1, difficulty: .medium, pieRuleEnabled: false, player1Name: "You", player2Name: "Opponent")
+        GameConfig(variant: variant, playMode: .online, playerSide: .p1, difficulty: .medium, player1Name: "You", player2Name: "Opponent")
     }
 }
 

@@ -15,8 +15,6 @@ final class GameViewModel {
     var routingAnimationSource: Int? = nil
     var routingAnimationTarget: Set<Int> = []
     var showRoutingAnimation: Bool = false
-    var showPieRuleOffer: Bool = false
-    var hasPieRuleBeenOffered: Bool = false
     var showTurnHandoff: Bool = false
     var gameOverState: GameState? = nil
 
@@ -27,7 +25,6 @@ final class GameViewModel {
         self.config = config
         self.settings = settings
         self.state = GameState.initial(variant: config.variant)
-        if config.pieRuleEnabled { showPieRuleOffer = false }
     }
 
     // MARK: - Board Interaction
@@ -79,32 +76,6 @@ final class GameViewModel {
         pendingMove = nil
     }
 
-    // MARK: - Pie Rule
-
-    func acceptPieRule() {
-        // Swap sides — P1 becomes P2 and vice versa
-        // The first move already happened, now P2 decides to swap
-        hasPieRuleBeenOffered = true
-        showPieRuleOffer = false
-        // Swap state: current player is now P2, swap all P1 pieces to P2 and vice versa
-        var newState = state
-        for i in 0..<9 {
-            for j in 0..<9 {
-                if newState.boards[i].cells[j] == .p1 { newState.boards[i].cells[j] = .p2 }
-                else if newState.boards[i].cells[j] == .p2 { newState.boards[i].cells[j] = .p1 }
-            }
-        }
-        newState.currentPlayer = .p2
-        state = newState
-        triggerAIIfNeeded()
-    }
-
-    func declinePieRule() {
-        hasPieRuleBeenOffered = true
-        showPieRuleOffer = false
-        triggerAIIfNeeded()
-    }
-
     // MARK: - Undo / Resign
 
     func undo() {
@@ -151,12 +122,6 @@ final class GameViewModel {
 
         // Close zoom
         zoomedBoardIndex = nil
-
-        // Pie rule: offer after P1's first move
-        if config.pieRuleEnabled && !hasPieRuleBeenOffered && state.moveCount == 1 && config.playMode != .online {
-            showPieRuleOffer = true
-            return
-        }
 
         if state.isGameOver {
             handleGameOver()

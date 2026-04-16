@@ -18,9 +18,6 @@ final class SettingsStore {
     var autoZoom: Bool = true {
         didSet { UserDefaults.standard.set(autoZoom, forKey: "autoZoom") }
     }
-    var pieRuleDefault: Bool = false {
-        didSet { UserDefaults.standard.set(pieRuleDefault, forKey: "pieRuleDefault") }
-    }
     var player1Name: String = "Player 1" {
         didSet { UserDefaults.standard.set(player1Name, forKey: "player1Name") }
     }
@@ -35,7 +32,6 @@ final class SettingsStore {
         if let v = ud.object(forKey: "showRoutingAnimation") as? Bool { showRoutingAnimation = v }
         if let v = ud.object(forKey: "showConfirmButton") as? Bool { showConfirmButton = v }
         if let v = ud.object(forKey: "autoZoom") as? Bool { autoZoom = v }
-        if let v = ud.object(forKey: "pieRuleDefault") as? Bool { pieRuleDefault = v }
         if let v = ud.string(forKey: "player1Name") { player1Name = v }
         if let v = ud.string(forKey: "player2Name") { player2Name = v }
     }

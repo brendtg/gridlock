@@ -17,13 +17,11 @@ final class DifficultyPickerViewModel {
     let settings: SettingsStore
     var selectedDifficulty: Difficulty = .medium
     var selectedSide: Player = .p1
-    var pieRuleEnabled: Bool
 
     init(router: AppRouter, variant: GameVariant, settings: SettingsStore) {
         self.router = router
         self.variant = variant
         self.settings = settings
-        self.pieRuleEnabled = settings.pieRuleDefault
     }
 
     var cards: [DifficultyCardItem] {
@@ -56,7 +54,6 @@ final class DifficultyPickerViewModel {
             variant: variant,
             difficulty: selectedDifficulty,
             side: selectedSide,
-            pieRule: pieRuleEnabled,
             p1Name: settings.player1Name,
             p2Name: settings.player2Name
         )

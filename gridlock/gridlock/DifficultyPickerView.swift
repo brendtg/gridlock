@@ -49,24 +49,6 @@ struct DifficultyPickerView: View {
                 }
                 .padding(.horizontal)
 
-                // Pie rule toggle
-                Toggle(isOn: $vm.pieRuleEnabled) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Pie Rule")
-                            .font(.sfRounded(15, weight: .medium))
-                            .foregroundColor(AppTheme.textPrimary)
-                        Text("P2 may swap sides after P1's first move")
-                            .font(.sfRounded(12))
-                            .foregroundColor(AppTheme.textSecondary)
-                    }
-                }
-                .tint(AppTheme.secondary)
-                .padding(.horizontal)
-                .padding(.vertical, 10)
-                .background(AppTheme.surface)
-                .cornerRadius(12)
-                .padding(.horizontal)
-
                 Spacer()
 
                 Button(action: vm.start) {

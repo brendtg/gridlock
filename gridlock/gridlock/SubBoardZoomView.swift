@@ -5,23 +5,24 @@ struct SubBoardZoomView: View {
     let boardIndex: Int
     let vm: GameViewModel
 
-    private var board: SubBoard { vm.state.boards[boardIndex] }
     private var isExtended: Bool { vm.state.variant.isExtended }
 
     var body: some View {
         ZStack {
-            // Blurred backdrop
             Color.black.opacity(0.75)
                 .ignoresSafeArea()
                 .onTapGesture { vm.dismissZoom() }
 
-            VStack(spacing: 0) {
-                // Board header
-                HStack {
+            VStack(spacing: 16) {
+                // Header: title + mini meta-board + close
+                HStack(alignment: .center, spacing: 12) {
                     Text("Board \(boardIndex + 1)")
                         .font(.sfRounded(18, weight: .semibold))
                         .foregroundColor(AppTheme.textPrimary)
                     Spacer()
+                    MetaBoardView(vm: vm)
+                        .frame(width: 88, height: 88)
+                        .allowsHitTesting(false)
                     Button(action: vm.dismissZoom) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.title2)
@@ -30,21 +31,25 @@ struct SubBoardZoomView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 20)
-                .padding(.bottom, 12)
 
-                // Board grid
-                ZoomedBoardGrid(boardIndex: boardIndex, vm: vm, isExtended: isExtended)
-                    .padding(.horizontal, 16)
-                    .frame(maxWidth: .infinity)
-
-                // Confirm / Cancel bar
-                if vm.settings.showConfirmButton, let pending = vm.pendingMove, pending.boardIndex == boardIndex {
-                    ConfirmBar(vm: vm)
+                // Sub-board grid
+                if isExtended {
+                    Extended5x5BoardView(boardIndex: boardIndex, vm: vm)
                         .padding(.horizontal, 24)
-                        .padding(.top, 16)
+                } else {
+                    Classic3x3BoardView(boardIndex: boardIndex, vm: vm)
+                        .padding(.horizontal, 24)
                 }
 
-                Spacer(minLength: 20)
+                // Confirm / Cancel bar
+                if vm.settings.showConfirmButton,
+                   let pending = vm.pendingMove,
+                   pending.boardIndex == boardIndex {
+                    ConfirmBar(vm: vm)
+                        .padding(.horizontal, 24)
+                }
+
+                Spacer(minLength: 16)
             }
             .background(AppTheme.background.cornerRadius(20))
             .padding(.horizontal, 16)
@@ -54,50 +59,59 @@ struct SubBoardZoomView: View {
     }
 }
 
-@MainActor
-private struct ZoomedBoardGrid: View {
-    let boardIndex: Int
-    let vm: GameViewModel
-    let isExtended: Bool
-
-    private var board: SubBoard { vm.state.boards[boardIndex] }
-
-    var body: some View {
-        if isExtended {
-            Extended5x5BoardView(boardIndex: boardIndex, vm: vm)
-        } else {
-            Classic3x3BoardView(boardIndex: boardIndex, vm: vm)
-        }
-    }
-}
-
 // MARK: - Classic 3x3
 
 @MainActor
 private struct Classic3x3BoardView: View {
     let boardIndex: Int
     let vm: GameViewModel
+
     private var board: SubBoard { vm.state.boards[boardIndex] }
 
     var body: some View {
-        VStack(spacing: 8) {
-            ForEach(0..<3, id: \.self) { row in
-                HStack(spacing: 8) {
-                    ForEach(0..<3, id: \.self) { col in
-                        let idx = row * 3 + col
-                        PositionButton(
-                            posType: .cell,
-                            posIndex: idx,
-                            boardIndex: boardIndex,
-                            player: board.cells[idx],
-                            isPending: isPending(posType: .cell, posIndex: idx),
-                            vm: vm
-                        )
-                        .frame(maxWidth: .infinity)
-                        .aspectRatio(1, contentMode: .fit)
+        GeometryReader { geo in
+            let size = min(geo.size.width, geo.size.height)
+            ZStack(alignment: .topLeading) {
+                // Grid of buttons (spacing 0 so Canvas coords map cleanly)
+                VStack(spacing: 0) {
+                    ForEach(0..<3, id: \.self) { row in
+                        HStack(spacing: 0) {
+                            ForEach(0..<3, id: \.self) { col in
+                                let idx = row * 3 + col
+                                PositionButton(
+                                    posType: .cell,
+                                    posIndex: idx,
+                                    boardIndex: boardIndex,
+                                    player: board.cells[idx],
+                                    isPending: isPending(posType: .cell, posIndex: idx),
+                                    vm: vm
+                                )
+                                .frame(width: size / 3, height: size / 3)
+                            }
+                        }
                     }
                 }
+
+                // Tic-tac-toe dividing lines
+                Canvas { ctx, sz in
+                    let lw: CGFloat = 3
+                    let color = Color(white: 0.55)
+                    for t in [1.0 / 3.0, 2.0 / 3.0] {
+                        var h = Path()
+                        h.move(to: CGPoint(x: 0, y: sz.height * t))
+                        h.addLine(to: CGPoint(x: sz.width, y: sz.height * t))
+                        ctx.stroke(h, with: .color(color), lineWidth: lw)
+
+                        var v = Path()
+                        v.move(to: CGPoint(x: sz.width * t, y: 0))
+                        v.addLine(to: CGPoint(x: sz.width * t, y: sz.height))
+                        ctx.stroke(v, with: .color(color), lineWidth: lw)
+                    }
+                }
+                .allowsHitTesting(false)
+                .frame(width: size, height: size)
             }
+            .frame(width: size, height: size)
         }
         .aspectRatio(1, contentMode: .fit)
     }
@@ -114,99 +128,76 @@ private struct Classic3x3BoardView: View {
 private struct Extended5x5BoardView: View {
     let boardIndex: Int
     let vm: GameViewModel
+
     private var board: SubBoard { vm.state.boards[boardIndex] }
 
-    // 5x5 grid layout:
-    // (0,0)=I[0]  (0,1)=E[0]  (0,2)=I[1]  (0,3)=E[1]  (0,4)=I[2] -- wait, spec says:
-    // i e i e i   (top row: TL, top0, top_mid, top1... hmm)
-    // let's use: row0: TL(I0), top0(E0), top1(E1), top2(E2), TR(I1)... no.
-    // From SubBoard.swift definition:
-    //   edges[0..2] = top0,top1,top2; edges[3..5]=right0,1,2; edges[6..8]=bot0,1,2; edges[9..11]=left0,1,2
-    //   intersections[0]=TL, [1]=TR, [2]=BR, [3]=BL
-    // 5x5 grid mapping:
-    // (0,0)=I0=TL  (0,1)=E0=top0  (0,2)=I1=TR  ... wait TR should be at (0,4)
-    // Let's do it properly:
-    // Row 0: I[0]=TL, E[top0]=0, E[top1]=1, E[top2]=2, I[1]=TR  (but top has 3 edges between TL and TR)
-    // Hmm, spec says "4 sides x 3 positions each = 12 edges" but the 5x5 grid only has 3 positions on each side
-    // between corners. So: 5x5 = 25 positions, inner 3x3 = 9 cells, border = 16 positions (4 corners + 12 edges)
-    // 4 corners = intersections[0..3]
-    // 12 edges: top(3) + right(3) + bottom(3) + left(3)
-    // Row 0: I[0], E[top0], E[top1], E[top2], I[1]
-    // Row 1: E[left0], C[0], C[1], C[2], E[right0]
-    // Row 2: E[left1], C[3], C[4], C[5], E[right1]
-    // Row 3: E[left2], C[6], C[7], C[8], E[right2]
-    // Row 4: I[3], E[bot0], E[bot1], E[bot2], I[2]
-
-    struct GridPos {
-        let posType: PosType
-        let posIndex: Int
-    }
-
-    var gridPositions: [[GridPos]] {
-        [
-            [GridPos(posType: .intersection, posIndex: 0),
-             GridPos(posType: .edge, posIndex: 0),
-             GridPos(posType: .edge, posIndex: 1),
-             GridPos(posType: .edge, posIndex: 2),
-             GridPos(posType: .intersection, posIndex: 1)],
-            [GridPos(posType: .edge, posIndex: 9),
-             GridPos(posType: .cell, posIndex: 0),
-             GridPos(posType: .cell, posIndex: 1),
-             GridPos(posType: .cell, posIndex: 2),
-             GridPos(posType: .edge, posIndex: 3)],
-            [GridPos(posType: .edge, posIndex: 10),
-             GridPos(posType: .cell, posIndex: 3),
-             GridPos(posType: .cell, posIndex: 4),
-             GridPos(posType: .cell, posIndex: 5),
-             GridPos(posType: .edge, posIndex: 4)],
-            [GridPos(posType: .edge, posIndex: 11),
-             GridPos(posType: .cell, posIndex: 6),
-             GridPos(posType: .cell, posIndex: 7),
-             GridPos(posType: .cell, posIndex: 8),
-             GridPos(posType: .edge, posIndex: 5)],
-            [GridPos(posType: .intersection, posIndex: 3),
-             GridPos(posType: .edge, posIndex: 6),
-             GridPos(posType: .edge, posIndex: 7),
-             GridPos(posType: .edge, posIndex: 8),
-             GridPos(posType: .intersection, posIndex: 2)],
-        ]
-    }
+    // 5x5 grid mapping — matches SubBoard flat index layout:
+    // Row 0: I[0]=TL, E[top0]=0, E[top1]=1, E[top2]=2, I[1]=TR
+    // Row 1: E[left0]=9, C[0], C[1], C[2], E[right0]=3
+    // Row 2: E[left1]=10, C[3], C[4], C[5], E[right1]=4
+    // Row 3: E[left2]=11, C[6], C[7], C[8], E[right2]=5
+    // Row 4: I[3]=BL, E[bot0]=6, E[bot1]=7, E[bot2]=8, I[2]=BR
+    private let gridPositions: [[(PosType, Int)]] = [
+        [(.intersection,0), (.edge,0),  (.edge,1),  (.edge,2),  (.intersection,1)],
+        [(.edge,9),          (.cell,0),  (.cell,1),  (.cell,2),  (.edge,3)],
+        [(.edge,10),         (.cell,3),  (.cell,4),  (.cell,5),  (.edge,4)],
+        [(.edge,11),         (.cell,6),  (.cell,7),  (.cell,8),  (.edge,5)],
+        [(.intersection,3), (.edge,6),  (.edge,7),  (.edge,8),  (.intersection,2)],
+    ]
 
     var body: some View {
-        VStack(spacing: 4) {
-            ForEach(0..<5, id: \.self) { row in
-                HStack(spacing: 4) {
-                    ForEach(0..<5, id: \.self) { col in
-                        let gp = gridPositions[row][col]
-                        let player = board.occupant(posType: gp.posType, posIndex: gp.posIndex)
-                        PositionButton(
-                            posType: gp.posType,
-                            posIndex: gp.posIndex,
-                            boardIndex: boardIndex,
-                            player: player,
-                            isPending: isPending(gp),
-                            vm: vm
-                        )
-                        .frame(maxWidth: .infinity)
-                        .aspectRatio(posAspect(gp.posType), contentMode: .fit)
+        GeometryReader { geo in
+            let size = min(geo.size.width, geo.size.height)
+            ZStack(alignment: .topLeading) {
+                // Uniform 5x5 grid — spacing 0 keeps line math clean
+                VStack(spacing: 0) {
+                    ForEach(0..<5, id: \.self) { row in
+                        HStack(spacing: 0) {
+                            ForEach(0..<5, id: \.self) { col in
+                                let (pt, pi) = gridPositions[row][col]
+                                let player = board.occupant(posType: pt, posIndex: pi)
+                                PositionButton(
+                                    posType: pt,
+                                    posIndex: pi,
+                                    boardIndex: boardIndex,
+                                    player: player,
+                                    isPending: isPending(posType: pt, posIndex: pi),
+                                    vm: vm
+                                )
+                                .frame(width: size / 5, height: size / 5)
+                            }
+                        }
                     }
                 }
+
+                // Tic-tac-toe lines: between border row/col and inner cells
+                // Lines at 1/5 and 4/5 of total size
+                Canvas { ctx, sz in
+                    let lw: CGFloat = 3
+                    let color = Color(white: 0.55)
+                    for t in [1.0 / 5.0, 4.0 / 5.0] {
+                        var h = Path()
+                        h.move(to: CGPoint(x: 0, y: sz.height * t))
+                        h.addLine(to: CGPoint(x: sz.width, y: sz.height * t))
+                        ctx.stroke(h, with: .color(color), lineWidth: lw)
+
+                        var v = Path()
+                        v.move(to: CGPoint(x: sz.width * t, y: 0))
+                        v.addLine(to: CGPoint(x: sz.width * t, y: sz.height))
+                        ctx.stroke(v, with: .color(color), lineWidth: lw)
+                    }
+                }
+                .allowsHitTesting(false)
+                .frame(width: size, height: size)
             }
+            .frame(width: size, height: size)
         }
         .aspectRatio(1, contentMode: .fit)
     }
 
-    private func posAspect(_ pt: PosType) -> CGFloat {
-        switch pt {
-        case .cell: return 1.0
-        case .edge: return 0.6
-        case .intersection: return 0.6
-        }
-    }
-
-    private func isPending(_ gp: GridPos) -> Bool {
+    private func isPending(posType: PosType, posIndex: Int) -> Bool {
         guard let p = vm.pendingMove else { return false }
-        return p.boardIndex == boardIndex && p.posType == gp.posType && p.posIndex == gp.posIndex
+        return p.boardIndex == boardIndex && p.posType == posType && p.posIndex == posIndex
     }
 }
 
@@ -225,50 +216,28 @@ private struct PositionButton: View {
         Button(action: {
             vm.tapPosition(boardIndex: boardIndex, posType: posType, posIndex: posIndex)
         }) {
-            ZStack {
-                positionBackground
-                if player != .empty {
-                    Text(player.symbol)
-                        .font(.sfRounded(fontSize, weight: .bold))
-                        .foregroundColor(AppTheme.playerColor(player))
-                } else if isPending {
-                    Circle()
-                        .fill(AppTheme.secondary.opacity(0.6))
-                        .padding(4)
+            GeometryReader { geo in
+                let s = min(geo.size.width, geo.size.height)
+                ZStack {
+                    if player != .empty {
+                        Circle()
+                            .fill(AppTheme.playerColor(player))
+                            .frame(width: s * 0.72, height: s * 0.72)
+                    } else if isPending {
+                        Circle()
+                            .fill(AppTheme.secondary.opacity(0.55))
+                            .frame(width: s * 0.60, height: s * 0.60)
+                    } else {
+                        Circle()
+                            .fill(AppTheme.textSecondary.opacity(0.18))
+                            .frame(width: s * 0.36, height: s * 0.36)
+                    }
                 }
-                if player == .empty && !isPending && posType != .cell {
-                    Text(posType == .edge ? "E" : "I")
-                        .font(.sfRounded(9, weight: .medium))
-                        .foregroundColor(AppTheme.textSecondary.opacity(0.6))
-                }
+                .frame(width: geo.size.width, height: geo.size.height)
             }
         }
         .buttonStyle(.plain)
         .disabled(player != .empty)
-    }
-
-    private var fontSize: CGFloat {
-        switch posType {
-        case .cell: return 22
-        case .edge, .intersection: return 16
-        }
-    }
-
-    @ViewBuilder
-    private var positionBackground: some View {
-        let color: Color = player != .empty ? AppTheme.playerColor(player).opacity(0.15) :
-                           (isPending ? AppTheme.secondary.opacity(0.2) : AppTheme.surface)
-        switch posType {
-        case .cell:
-            RoundedRectangle(cornerRadius: 8).fill(color)
-        case .edge:
-            RoundedRectangle(cornerRadius: 6).fill(color)
-        case .intersection:
-            RoundedRectangle(cornerRadius: 10).fill(color)
-                .rotationEffect(.degrees(45))
-                .scaleEffect(0.7)
-                .background(Color.clear)
-        }
     }
 }
 
