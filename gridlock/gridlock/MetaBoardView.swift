@@ -74,12 +74,12 @@ struct CompactSubBoardView: View {
                     .padding(3)
             }
 
-            // Zoomed board: light fill in current player's color
+            // Zoomed board: tinted fill in current player's color
             if isZoomed {
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(currentPlayerColor.opacity(0.18))
+                    .fill(currentPlayerColor.opacity(0.30))
                 RoundedRectangle(cornerRadius: 6)
-                    .stroke(currentPlayerColor.opacity(0.8), lineWidth: 3)
+                    .stroke(currentPlayerColor, lineWidth: 3)
             }
 
             // Routing target: outlined in opponent's color
@@ -201,10 +201,6 @@ private struct MiniPiece: View {
                 Circle()
                     .fill(AppTheme.playerColor(player))
                     .padding(cellSize * 0.12)
-            } else {
-                Circle()
-                    .fill(Color(white: 0.5).opacity(0.18))
-                    .padding(cellSize * 0.28)
             }
         }
         .frame(width: cellSize, height: cellSize)
