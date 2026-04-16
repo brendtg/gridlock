@@ -4,26 +4,16 @@ import SwiftUI
 struct MetaBoardView: View {
     let vm: GameViewModel
 
-    var body: some View {
-        GeometryReader { geo in
-            let size = min(geo.size.width, geo.size.height)
-            let boardSize = (size - 8) / 3
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 3)
 
-            VStack(spacing: 4) {
-                ForEach(0..<3, id: \.self) { row in
-                    HStack(spacing: 4) {
-                        ForEach(0..<3, id: \.self) { col in
-                            let idx = row * 3 + col
-                            CompactSubBoardView(boardIndex: idx, vm: vm)
-                                .frame(width: boardSize, height: boardSize)
-                                .onTapGesture { vm.tapSubBoard(idx) }
-                        }
-                    }
-                }
+    var body: some View {
+        LazyVGrid(columns: columns, spacing: 4) {
+            ForEach(0..<9, id: \.self) { idx in
+                CompactSubBoardView(boardIndex: idx, vm: vm)
+                    .aspectRatio(1, contentMode: .fit)
+                    .onTapGesture { vm.tapSubBoard(idx) }
             }
-            .frame(width: size, height: size)
         }
-        .aspectRatio(1, contentMode: .fit)
     }
 }
 
