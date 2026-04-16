@@ -2,6 +2,7 @@ import SwiftUI
 import GameKit
 
 @main
+@MainActor
 struct gridlockApp: App {
     @State private var router = AppRouter()
     @State private var settings = SettingsStore()
