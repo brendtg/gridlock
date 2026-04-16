@@ -18,7 +18,7 @@ struct GameState: Codable, Equatable, Hashable {
     var pendingRoutingChoice: Set<Int>
 
     static func initial(variant: GameVariant) -> GameState {
-        var s = GameState(
+        let s = GameState(
             boards: Array(repeating: SubBoard(), count: 9),
             metaStatus: Array(repeating: .active, count: 9),
             currentPlayer: .p1,

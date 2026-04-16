@@ -30,12 +30,7 @@ actor AIPlayer {
         case .hard:
             // Try minimax for classic, MCTS with higher iterations otherwise
             if !state.variant.isExtended {
-                // Use MCTS first for speed, fallback to minimax for classic
-                let mctsMove = MCTSAI.move(for: state, iterations: 300)
-                // Also run minimax depth 3 and pick best
-                let mmMove = MinimaxAI.move(for: state, depth: 3)
-                // Prefer minimax for classic (stronger at depth)
-                return mmMove
+                return MinimaxAI.move(for: state, depth: 3)
             } else {
                 return MCTSAI.move(for: state, iterations: 100)
             }

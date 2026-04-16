@@ -82,7 +82,7 @@ enum PlayMode {
     case online
 }
 
-struct TokenBudget: Codable, Equatable {
+struct TokenBudget: Codable, Equatable, Hashable {
     var edgeTokens: Int
     var intersectionTokens: Int
     static let initial = TokenBudget(edgeTokens: 18, intersectionTokens: 6)

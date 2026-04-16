@@ -134,7 +134,6 @@ final class GameViewModel {
         undoStack.append(state)
         HapticService.confirmMove(settings: settings)
         SoundService.playMove(settings: settings)
-        let prevBoards = state.activeBoards
         state = GameEngine.apply(move, to: state)
 
         // Show routing animation
